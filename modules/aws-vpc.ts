@@ -3,7 +3,6 @@ import { Construct } from "constructs";
 import { DataAwsAvailabilityZones } from "@cdktf/provider-aws/lib/data-aws-availability-zones";
 import { Fn, Token } from "cdktf";
 import { CIDRBlock } from "@eryldor/cidr";
-import { DataAwsVpc } from "../imports/providers/aws/data-aws-vpc";
 
 interface AwsVpcConfig {
     name: string,
@@ -49,18 +48,16 @@ export class AwsVpc extends Construct {
             databaseAclTags: { 'Name': 'Database tier ACL' },
             databaseSubnetGroupName: "database",
             flowLogCloudwatchLogGroupNamePrefix: options.name,
-            flowLogTrafficType: "ALL"
+            flowLogTrafficType: "ALL",
+            databaseDedicatedNetworkAcl: true,
+            publicDedicatedNetworkAcl: true,
+            privateDedicatedNetworkAcl: true
         };
 
         this.vpc = new Vpc(this, 'Vpc', vpcOptions);
         this.publicSubnetsOutput = Token.asList(this.vpc.publicSubnetsOutput);
         this.privateSubnetsOutput = Token.asList(this.vpc.privateSubnetsOutput);
         this.databaseSubnetsOutput = Token.asList(this.vpc.databaseSubnetsOutput);
-
-        new DataAwsVpc(scope,"everestvpc", {
-            cidrBlock: this.vpc.cidr,
-            dependsOn: [this.vpc]
-        })
     }
 }
 
