@@ -4,9 +4,10 @@ import { App, TerraformStack, Token, TerraformOutput, S3Backend } from "cdktf";
 import { AwsEcsCluster } from "./modules/aws-ecs-cluster";
 import { AwsVpc } from "./modules/aws-vpc";
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
-import { DataAwsVpcEndpoint } from "./imports/providers/aws/data-aws-vpc-endpoint";
 
-const REGION = "ap-south-1";
+const REGION = "us-west-2";
+const S3_BACKEND_BUCKET = "pg-cdktf-remote-state2";
+const DYNAMO_TABLE = 'cdktf-dynamo';
 
 class EverestInfraStack extends TerraformStack {
   public awsVpc: AwsVpc;
@@ -35,11 +36,6 @@ class EverestInfraStack extends TerraformStack {
 
     this.ecsCluster = new AwsEcsCluster(this, 'everest');
 
-    new DataAwsVpcEndpoint(this, "ecr-vpc-endpoint", {
-      vpcId: this.vpcId,
-      serviceName: 
-    });
-
     new TerraformOutput(this, 'EVEREST-VPC-ID', {
       value: this.vpcId,
     });
@@ -53,10 +49,10 @@ const app = new App();
 const stack = new EverestInfraStack(app, "aws-common-infrastructure");
 
 new S3Backend(stack, {
-  bucket: 'pg-cdktf-remote-state',
+  bucket: S3_BACKEND_BUCKET,
   key: 'everest-infra/terraform.tfstate',
   encrypt: true,
   region: REGION,
-  dynamodbTable: 'cdktf-dynamo'
+  dynamodbTable: DYNAMO_TABLE
 });
 app.synth();
