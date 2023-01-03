@@ -4,6 +4,7 @@ import { App, TerraformStack, Token, TerraformOutput, S3Backend } from "cdktf";
 import { AwsEcsCluster } from "./modules/aws-ecs-cluster";
 import { AwsVpc } from "./modules/aws-vpc";
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
+import { DataAwsVpcEndpoint } from "./imports/providers/aws/data-aws-vpc-endpoint";
 
 const REGION = "ap-south-1";
 
@@ -34,14 +35,16 @@ class EverestInfraStack extends TerraformStack {
 
     this.ecsCluster = new AwsEcsCluster(this, 'everest');
 
+    new DataAwsVpcEndpoint(this, "ecr-vpc-endpoint", {
+      vpcId: this.vpcId,
+      serviceName: 
+    });
+
     new TerraformOutput(this, 'EVEREST-VPC-ID', {
       value: this.vpcId,
     });
     new TerraformOutput(this, 'EVEREST-ECS-CLUSTER', {
       value: this.ecsCluster.ecsCluster.name,
-    });
-    new TerraformOutput(this, 'EVEREST-DATABASE-SUBNETS', {
-      value: this.databaseSubnets,
     });
   }
 }

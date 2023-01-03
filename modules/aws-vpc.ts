@@ -33,7 +33,7 @@ export class AwsVpc extends Construct {
             privateSubnets: privateSubnets.flatMap(privateSubnet => privateSubnet.toString()),
             publicSubnets: publicSubnets.flatMap(subnet => subnet.toString()),
             databaseSubnets: databaseSubnets.flatMap(subnet => subnet.toString()),
-            //enableNatGateway: true,
+            enableNatGateway: true,
             oneNatGatewayPerAz: true,
             publicInboundAclRules: getPublicInboundAclRules(),
             publicOutboundAclRules: getPublicOutboundAclRules(),
@@ -51,7 +51,13 @@ export class AwsVpc extends Construct {
             flowLogTrafficType: "ALL",
             databaseDedicatedNetworkAcl: true,
             publicDedicatedNetworkAcl: true,
-            privateDedicatedNetworkAcl: true
+            privateDedicatedNetworkAcl: true,
+            publicSubnetTags: { 'Tier': 'Public' },
+            privateSubnetTags: { 'Tier': 'Private' },
+            databaseSubnetTags: { 'Tier': 'Database' },
+            publicRouteTableTags: { 'Tier': 'Public' },
+            privateRouteTableTags: { 'Tier': 'Private' },
+            databaseRouteTableTags: { 'Tier': 'Database' },
         };
 
         this.vpc = new Vpc(this, 'Vpc', vpcOptions);
@@ -66,6 +72,7 @@ function getPublicInboundAclRules(): { [key: string]: string; }[] | undefined {
         getAclRule('100', 'allow', '80', '80', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
         getAclRule('110', 'allow', '443', '443', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
         getAclRule('120', 'allow', '22', '22', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('140', 'allow', '1024', '65535', '-1', CIDRBlock.fromString('0.0.0.0/0')),
     ]
 }
 
@@ -83,6 +90,7 @@ function getPrivateInboundAclRules(publicSubnets: CIDRBlock[], privateSubnets: C
         getAclRule('110', 'allow', '0', '0', '-1', privateSubnets[1]),
         getAclRule('120', 'allow', '0', '0', '-1', publicSubnets[0]),
         getAclRule('130', 'allow', '0', '0', '-1', publicSubnets[1]),
+        getAclRule('140', 'allow', '1024', '65535', '-1', CIDRBlock.fromString('0.0.0.0/0')),
     ]
 }
 
