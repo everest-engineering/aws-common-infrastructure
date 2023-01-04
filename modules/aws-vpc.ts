@@ -35,10 +35,10 @@ export class AwsVpc extends Construct {
             databaseSubnets: databaseSubnets.flatMap(subnet => subnet.toString()),
             enableNatGateway: true,
             oneNatGatewayPerAz: true,
-            publicInboundAclRules: getPublicInboundAclRules(),
+            publicInboundAclRules: getPublicInboundAclRules(CIDRBlock.fromString(options.cidr)),
             publicOutboundAclRules: getPublicOutboundAclRules(),
             privateInboundAclRules: getPrivateInboundAclRules(publicSubnets, privateSubnets),
-            privateOutboundAclRules: getPrivateOutboundAclRules(publicSubnets, privateSubnets, databaseSubnets),
+            privateOutboundAclRules: getPrivateOutboundAclRules(CIDRBlock.fromString(options.cidr)),
             databaseInboundAclRules: getDatabaseInboundAclRules(publicSubnets, privateSubnets),
             databaseOutboundAclRules: getDatabaseOutboundAclRules(privateSubnets),
             createDatabaseSubnetRouteTable: true,
@@ -67,12 +67,13 @@ export class AwsVpc extends Construct {
     }
 }
 
-function getPublicInboundAclRules(): { [key: string]: string; }[] | undefined {
+function getPublicInboundAclRules(vpcCidr: CIDRBlock): { [key: string]: string; }[] | undefined {
     return [
         getAclRule('100', 'allow', '80', '80', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
         getAclRule('110', 'allow', '443', '443', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
         getAclRule('120', 'allow', '22', '22', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
-        getAclRule('140', 'allow', '1024', '65535', '-1', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('140', 'allow', '1024', '65535', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('100', 'allow', '0', '0', 'tcp', vpcCidr),
     ]
 }
 
@@ -90,7 +91,9 @@ function getPrivateInboundAclRules(publicSubnets: CIDRBlock[], privateSubnets: C
         getAclRule('110', 'allow', '0', '0', '-1', privateSubnets[1]),
         getAclRule('120', 'allow', '0', '0', '-1', publicSubnets[0]),
         getAclRule('130', 'allow', '0', '0', '-1', publicSubnets[1]),
-        getAclRule('140', 'allow', '1024', '65535', '-1', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('140', 'allow', '1024', '65535', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('150', 'allow', '443', '443', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('160', 'allow', '80', '80', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
     ]
 }
 
@@ -105,14 +108,12 @@ function getAclRule(rule_number: string, rule_action: string, from_port: string,
     }
 }
 
-function getPrivateOutboundAclRules(publicSubnets: CIDRBlock[], privateSubnets: CIDRBlock[], databaseSubnets: CIDRBlock[]): { [key: string]: string; }[] | undefined {
+function getPrivateOutboundAclRules(vpcCidr : CIDRBlock): { [key: string]: string; }[] | undefined {
     return [
-        getAclRule('100', 'allow', '0', '0', '-1', privateSubnets[0]),
-        getAclRule('110', 'allow', '0', '0', '-1', privateSubnets[1]),
-        getAclRule('120', 'allow', '0', '0', '-1', publicSubnets[0]),
-        getAclRule('130', 'allow', '0', '0', '-1', publicSubnets[1]),
-        getAclRule('140', 'allow', '0', '0', '-1', databaseSubnets[0]),
-        getAclRule('150', 'allow', '0', '0', '-1', databaseSubnets[1]),
+        getAclRule('100', 'allow', '0', '0', '-1', vpcCidr),
+        getAclRule('110', 'allow', '443', '443', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('120', 'allow', '80', '80', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
+        getAclRule('130', 'allow', '1024', '65535', 'tcp', CIDRBlock.fromString('0.0.0.0/0')),
     ]
 }
 
