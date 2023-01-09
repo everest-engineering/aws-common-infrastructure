@@ -5,9 +5,9 @@ import { AwsEcsCluster } from "./modules/aws-ecs-cluster";
 import { AwsVpc } from "./modules/aws-vpc";
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
 
-const REGION = "us-west-2";
-const S3_BACKEND_BUCKET = "pg-cdktf-remote-state2";
-const DYNAMO_TABLE = 'cdktf-dynamo';
+const REGION = "ap-south-1";
+const S3_BACKEND_BUCKET = "cdktf-state-bucket";
+const DYNAMO_TABLE = 'cdktf-state';
 
 class EverestInfraStack extends TerraformStack {
   public awsVpc: AwsVpc;
